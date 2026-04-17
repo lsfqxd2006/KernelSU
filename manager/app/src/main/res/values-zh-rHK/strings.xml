@@ -242,4 +242,23 @@
     <string name="home_pr_build_warning">此為 PR 除錯版本，切勿於正式環境使用！</string>
     <string name="home_pr_kernel_warning">此核心具 PR 簽名支援，並非正式版本核心！</string>
     <string name="jailbreak_flash_warning">現正處於**越獄模式**。在 **Bootloader 鎖定**的裝置上刷入分割區會破壞 AVB 驗證，或導致**無法開機**。\n\n操作前請確保 Bootloader 已解鎖！</string>
+    <string name="sulog_log_files">日誌檔案</string>
+    <string name="sulog_failed_to_load">載入日誌失敗</string>
+    <string name="sulog_disabled_title">超級使用者日誌未啟用</string>
+    <string name="sulog_unsupported_title">不支援超級使用者日誌</string>
+    <string name="sulog_enable_action">啟用</string>
+    <string name="sulog_filter_title">依類型篩選</string>
+    <string name="sulog_clean_title">清除日誌</string>
+    <string name="sulog_filter_root_execve">執行 Root 行程</string>
+    <string name="sulog_filter_sucompat">傳統 SU 指令相容</string>
+    <string name="sulog_filter_ioctl_grant_root">授予 Root 權限</string>
+    <string name="sulog_filter_daemon_restart">守護程序重新啟動</string>
+    <string name="sulog_entry_unknown_event">未知事件</string>
+    <string name="sulog_entry_description_sucompat">已攔截 /system/bin/su 要求</string>
+    <string name="sulog_entry_title_root_grant_request">Root 授權要求</string>
+    <string name="sulog_entry_description_ioctl_grant_root">已透過 KernelSU ioctl 授予 Root 權限</string>
+    <string name="sulog_entry_title_daemon_restarted">守護程序已重新啟動</string>
+    <string name="sulog_entry_title_dropped_events">已丟棄事件</string>
+    <string name="settings_sulog">超級使用者日誌</string>
+    <string name="settings_sulog_summary">將 root 相關事件記錄到 KernelSU 的超級使用者日誌檔案中。</string>
 </resources>
