@@ -249,4 +249,23 @@
     <string name="download_cancel">取消</string>
     <string name="download_install">安装</string>
     <string name="settings_adb_root_summary">以 root 权限运行 adbd 守护进程</string>
+    <string name="sulog_log_files">日志文件</string>
+    <string name="sulog_failed_to_load">加载日志文件失败</string>
+    <string name="sulog_disabled_title">超级用户日志未启用</string>
+    <string name="sulog_unsupported_title">超级用户日志不被支持</string>
+    <string name="sulog_enable_action">启用</string>
+    <string name="sulog_filter_title">按类型筛选</string>
+    <string name="sulog_clean_title">清除日志</string>
+    <string name="sulog_filter_root_execve">执行 Root 进程 </string>
+    <string name="sulog_filter_sucompat">传统 SU 命令兼容</string>
+    <string name="sulog_filter_ioctl_grant_root">授予 Root 权限</string>
+    <string name="sulog_filter_daemon_restart">守护进程重启 restart</string>
+    <string name="sulog_entry_unknown_event">未知事件</string>
+    <string name="sulog_entry_description_sucompat">已拦截 /system/bin/su 请求</string>
+    <string name="sulog_entry_title_root_grant_request">Root 授权请求</string>
+    <string name="sulog_entry_description_ioctl_grant_root">已通过 KernelSU ioctl 授予 Root 权限</string>
+    <string name="sulog_entry_title_daemon_restarted">守护进程已重启</string>
+    <string name="sulog_entry_title_dropped_events">已丢弃事件</string>
+    <string name="settings_sulog">超级用户日志</string>
+    <string name="settings_sulog_summary">把root相关事件记录到 KernelSU的超级用户日志文件中.</string>
 </resources>
