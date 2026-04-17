@@ -259,7 +259,7 @@
     <string name="sulog_filter_root_execve">执行 Root 进程 </string>
     <string name="sulog_filter_sucompat">传统 SU 命令兼容</string>
     <string name="sulog_filter_ioctl_grant_root">授予 Root 权限</string>
-    <string name="sulog_filter_daemon_restart">守护进程重启 restart</string>
+    <string name="sulog_filter_daemon_restart">守护进程重启</string>
     <string name="sulog_entry_unknown_event">未知事件</string>
     <string name="sulog_entry_description_sucompat">已拦截 /system/bin/su 请求</string>
     <string name="sulog_entry_title_root_grant_request">Root 授权请求</string>
