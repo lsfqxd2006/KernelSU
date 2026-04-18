@@ -88,7 +88,7 @@ KERNEL_GIT_ROOT := $(shell cd $(srctree) && $(GIT) rev-parse --show-toplevel 2>/
 ifneq ($(GIT_ROOT),$(KERNEL_GIT_ROOT))
 # Only set version if it's a different repo from kernel
 $(shell cd $(GIT_ROOT) && [ -f .git/shallow ] && $(GIT) fetch --unshallow 2>/dev/null || true)
-KSU_GIT_VERSION := $(shell cd $(GIT_ROOT) && $(GIT) fetch --quiet https://github.com/tiann/KernelSU.git main && $(GIT) rev-list --count FETCH_HEAD 2>/dev/null)
+KSU_GIT_VERSION := $(shell cd $(GIT_ROOT) && $(GIT) rev-list --count HEAD 2>/dev/null)
 KSU_GIT_VERSION_VALID := 1
 $(info -- KernelSU: Git repo detected at $(GIT_ROOT))
 endif
@@ -116,6 +116,7 @@ $(info -- KSU_NEW_DCACHE_FLUSH: $(KSU_NEW_DCACHE_FLUSH))
 KSU_EXPECTED_SIZE := 0x29c
 
 KSU_EXPECTED_HASH := 224ad6f3436123ed79588192cba9c8892a93bf9b89c8f734413e02afc627174a
+
 
 ifdef KSU_MANAGER_PACKAGE
 ccflags-y += -DKSU_MANAGER_PACKAGE=\"$(KSU_MANAGER_PACKAGE)\"
