@@ -267,5 +267,5 @@
     <string name="sulog_entry_title_daemon_restarted">守护进程已重启</string>
     <string name="sulog_entry_title_dropped_events">已丢弃事件</string>
     <string name="settings_sulog">超级用户日志</string>
-    <string name="settings_sulog_summary">把root相关事件记录到 KernelSU的超级用户日志文件中.</string>
+    <string name="settings_sulog_summary">把root相关事件记录到 KernelSU的超级用户日志文件中。</string>
 </resources>
