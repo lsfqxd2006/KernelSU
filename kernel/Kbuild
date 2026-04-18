@@ -113,14 +113,9 @@ endif
 KSU_NEW_DCACHE_FLUSH := $(shell grep -q __flush_dcache_area $(srctree)/arch/arm64/include/asm/cacheflush.h ; echo $$?)
 $(info -- KSU_NEW_DCACHE_FLUSH: $(KSU_NEW_DCACHE_FLUSH))
 
-
-ifndef KSU_EXPECTED_SIZE
 KSU_EXPECTED_SIZE := 0x29c
-endif
 
-ifndef KSU_EXPECTED_HASH
 KSU_EXPECTED_HASH := 224ad6f3436123ed79588192cba9c8892a93bf9b89c8f734413e02afc627174a
-endif
 
 ifdef KSU_MANAGER_PACKAGE
 ccflags-y += -DKSU_MANAGER_PACKAGE=\"$(KSU_MANAGER_PACKAGE)\"
