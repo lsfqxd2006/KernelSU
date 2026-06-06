@@ -64,8 +64,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -96,6 +94,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -122,10 +121,14 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import me.weishu.kernelsu.R
 import me.weishu.kernelsu.data.model.Module
 import me.weishu.kernelsu.data.model.ModuleUpdateInfo
+import me.weishu.kernelsu.ui.component.ObserveAsEvents
+import me.weishu.kernelsu.ui.component.ScrollToTopOnChange
 import me.weishu.kernelsu.ui.component.dialog.rememberConfirmDialog
 import me.weishu.kernelsu.ui.component.dialog.rememberLoadingDialog
 import me.weishu.kernelsu.ui.component.material.ExpressiveSwitch
@@ -137,12 +140,11 @@ import me.weishu.kernelsu.ui.component.statustag.StatusTag
 import me.weishu.kernelsu.ui.util.reboot
 
 @SuppressLint("StringFormatInvalid")
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ModulePagerMaterial(
     uiState: ModuleUiState,
     confirmDialogState: ModuleConfirmDialogState?,
-    effect: ModuleEffect?,
+    moduleEvent: Flow<ModuleEffect>,
     actions: ModuleActions,
     bottomInnerPadding: Dp,
 ) {
@@ -158,6 +160,7 @@ fun ModulePagerMaterial(
 
     val listState = rememberLazyListState()
     val searchListState = rememberLazyListState()
+    val refreshTick = remember { mutableStateOf(0) }
     val threshold = with(LocalDensity.current) { 100.dp.toPx() }
     val fabExpanded by remember {
         var lastIndex = 0
@@ -233,27 +236,28 @@ fun ModulePagerMaterial(
         }
     }
 
-    LaunchedEffect(effect) {
-        when (effect) {
+    val scope = rememberCoroutineScope()
+    val snackbarJob = remember { mutableStateOf<Job?>(null) }
+    ObserveAsEvents(moduleEvent) { event ->
+        when (event) {
             is ModuleEffect.Toast -> {
-                Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
-                actions.onConsumeEffect()
+                Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
             }
 
             is ModuleEffect.SnackBar -> {
-                snackBarHost.currentSnackbarData?.dismiss()
-                val result = snackBarHost.showSnackbar(
-                    message = effect.message,
-                    actionLabel = resource.getString(R.string.reboot),
-                    duration = SnackbarDuration.Long
-                )
-                if (result == SnackbarResult.ActionPerformed) {
-                    reboot()
+                // Cancel the previous reboot snackbar so a new one replaces it instead of queueing
+                snackbarJob.value?.cancel()
+                snackbarJob.value = scope.launch {
+                    val result = snackBarHost.showSnackbar(
+                        message = event.message,
+                        actionLabel = resource.getString(R.string.reboot),
+                        duration = SnackbarDuration.Long
+                    )
+                    if (result == SnackbarResult.ActionPerformed) {
+                        reboot()
+                    }
                 }
-                actions.onConsumeEffect()
             }
-
-            null -> Unit
         }
     }
 
@@ -311,9 +315,11 @@ fun ModulePagerMaterial(
                 },
                 scrollBehavior = scrollBehavior,
                 searchContent = { bottomPadding, closeSearch ->
-                    LaunchedEffect(uiState.searchStatus.searchText) {
-                        searchListState.scrollToItem(0)
-                    }
+                    val latestSearchResults = rememberUpdatedState(uiState.searchResults)
+                    ScrollToTopOnChange(
+                        searchListState,
+                        uiState.searchStatus.searchText,
+                    ) { latestSearchResults.value }
                     ModuleList(
                         bottomInnerPadding = bottomPadding,
                         modifier = Modifier.fillMaxSize(),
@@ -384,6 +390,7 @@ fun ModulePagerMaterial(
             onRefresh = {
                 haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
                 actions.onRefresh()
+                refreshTick.value++
             },
             state = pullToRefreshState,
             indicator = {
@@ -408,6 +415,15 @@ fun ModulePagerMaterial(
                 }
                 return@PullToRefreshBox
             }
+            val latestModuleList = rememberUpdatedState(uiState.moduleList)
+            val latestRefreshing = rememberUpdatedState(uiState.isRefreshing)
+            ScrollToTopOnChange(
+                listState,
+                uiState.sortEnabledFirst,
+                uiState.sortActionFirst,
+                refreshTick.value,
+                isBusy = { latestRefreshing.value },
+            ) { latestModuleList.value }
             ModuleList(
                 bottomInnerPadding = bottomInnerPadding,
                 modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -441,7 +457,6 @@ fun ModulePagerMaterial(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun ModuleList(
     bottomInnerPadding: Dp,
@@ -499,7 +514,6 @@ private fun ModuleList(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ModuleShortcutSheet(
     show: Boolean,
@@ -621,7 +635,7 @@ private fun ModuleShortcutSheet(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun ModuleItem(
     module: Module,

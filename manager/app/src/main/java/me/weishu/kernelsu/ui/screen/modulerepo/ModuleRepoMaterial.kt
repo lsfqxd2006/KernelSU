@@ -54,8 +54,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -71,6 +69,9 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -79,6 +80,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -99,6 +101,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import me.weishu.kernelsu.R
 import me.weishu.kernelsu.data.model.RepoModule
+import me.weishu.kernelsu.ui.component.ScrollToTopOnChange
 import me.weishu.kernelsu.ui.component.dialog.ConfirmDialogHandle
 import me.weishu.kernelsu.ui.component.dialog.rememberConfirmDialog
 import me.weishu.kernelsu.ui.component.markdown.GithubMarkdown
@@ -111,7 +114,6 @@ import me.weishu.kernelsu.ui.util.download
 import me.weishu.kernelsu.ui.util.rememberContentReady
 
 @SuppressLint("LocalContextGetResourceValueCall")
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ModuleRepoScreenMaterial(
     state: ModuleRepoUiState,
@@ -120,6 +122,8 @@ fun ModuleRepoScreenMaterial(
     val haptic = LocalHapticFeedback.current
     val listState = rememberLazyListState()
     val searchListState = rememberLazyListState()
+    val refreshTick = remember { mutableStateOf(0) }
+    val pullToRefreshState = rememberPullToRefreshState()
 
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
     val snackbarHostState = remember { SnackbarHostState() }
@@ -179,9 +183,11 @@ fun ModuleRepoScreenMaterial(
                     }
                 },
                 searchContent = { _, closeSearch ->
-                    LaunchedEffect(state.searchStatus.searchText) {
-                        searchListState.scrollToItem(0)
-                    }
+                    val latestSearchResults = rememberUpdatedState(state.searchResults)
+                    ScrollToTopOnChange(
+                        searchListState,
+                        state.searchStatus.searchText,
+                    ) { latestSearchResults.value }
                     RepoModuleList(
                         modules = state.searchResults,
                         listState = searchListState,
@@ -223,18 +229,42 @@ fun ModuleRepoScreenMaterial(
             }
         }
         if (!isLoading && contentReady) {
-            LaunchedEffect(state.sortOrder) {
-                listState.scrollToItem(0)
-            }
-            RepoModuleList(
-                modules = state.modules,
-                listState = listState,
+            val latestModules = rememberUpdatedState(state.modules)
+            val latestRefreshing = rememberUpdatedState(state.isRefreshing)
+            ScrollToTopOnChange(
+                listState,
+                state.sortOrder,
+                refreshTick.value,
+                isBusy = { latestRefreshing.value },
+            ) { latestModules.value }
+            PullToRefreshBox(
                 modifier = Modifier
                     .fillMaxSize()
-                    .nestedScroll(scrollBehavior.nestedScrollConnection)
                     .padding(innerPadding),
-                onModuleClick = actions.onOpenRepoDetail
-            )
+                isRefreshing = state.isRefreshing,
+                onRefresh = {
+                    haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
+                    actions.onRefresh()
+                    refreshTick.value++
+                },
+                state = pullToRefreshState,
+                indicator = {
+                    PullToRefreshDefaults.LoadingIndicator(
+                        modifier = Modifier.align(Alignment.TopCenter),
+                        isRefreshing = state.isRefreshing,
+                        state = pullToRefreshState,
+                    )
+                },
+            ) {
+                RepoModuleList(
+                    modules = state.modules,
+                    listState = listState,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .nestedScroll(scrollBehavior.nestedScrollConnection),
+                    onModuleClick = actions.onOpenRepoDetail
+                )
+            }
         }
     }
 }
@@ -351,7 +381,6 @@ private fun RepoModuleList(
 }
 
 @SuppressLint("StringFormatInvalid", "DefaultLocale")
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ModuleRepoDetailScreenMaterial(
     state: ModuleRepoDetailUiState,
@@ -469,7 +498,6 @@ fun ModuleRepoDetailScreenMaterial(
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun ReadmePage(
     readmeHtml: String?,
@@ -534,7 +562,6 @@ private fun ReadmePage(
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @SuppressLint("DefaultLocale")
 @Composable
 fun ReleasesPage(
