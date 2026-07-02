@@ -21,7 +21,6 @@ import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
@@ -50,8 +49,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
@@ -78,7 +79,6 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.ProvideTextStyle
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.SmallExtendedFloatingActionButton
 import androidx.compose.material3.SnackbarDuration
@@ -97,6 +97,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -137,6 +138,7 @@ import me.weishu.kernelsu.ui.component.ObserveAsEvents
 import me.weishu.kernelsu.ui.component.ScrollToTopOnChange
 import me.weishu.kernelsu.ui.component.dialog.rememberConfirmDialog
 import me.weishu.kernelsu.ui.component.dialog.rememberLoadingDialog
+import me.weishu.kernelsu.ui.component.material.ExpressiveScaffold
 import me.weishu.kernelsu.ui.component.material.ExpressiveSwitch
 import me.weishu.kernelsu.ui.component.material.SearchAppBar
 import me.weishu.kernelsu.ui.component.material.SnackBarHost
@@ -166,7 +168,7 @@ fun ModulePagerMaterial(
 
     val listState = rememberLazyListState()
     val searchListState = rememberLazyListState()
-    val refreshTick = remember { mutableStateOf(0) }
+    val refreshTick = remember { mutableIntStateOf(0) }
     val threshold = with(LocalDensity.current) { 100.dp.toPx() }
     val fabExpanded by remember {
         var lastIndex = 0
@@ -267,7 +269,7 @@ fun ModulePagerMaterial(
         }
     }
 
-    Scaffold(
+    ExpressiveScaffold(
         topBar = {
             SearchAppBar(
                 title = { Text(stringResource(R.string.module)) },
@@ -421,7 +423,7 @@ fun ModulePagerMaterial(
             onRefresh = {
                 haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
                 actions.onRefresh()
-                refreshTick.value++
+                refreshTick.intValue++
             },
             state = pullToRefreshState,
             indicator = {
@@ -452,7 +454,7 @@ fun ModulePagerMaterial(
                 listState,
                 uiState.sortEnabledFirst,
                 uiState.sortActionFirst,
-                refreshTick.value,
+                refreshTick.intValue,
                 isBusy = { latestRefreshing.value },
             ) { latestModuleList.value }
             ModuleList(
@@ -504,10 +506,9 @@ private fun ModuleList(
     LazyColumn(
         state = listState,
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        verticalArrangement = Arrangement.spacedBy(13.dp),
         contentPadding = PaddingValues(
             start = 16.dp,
-            top = 8.dp,
             end = 16.dp,
             bottom = 16.dp + bottomInnerPadding + 56.dp + 16.dp
         ),
@@ -567,14 +568,18 @@ private fun ModuleShortcutSheet(
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        sheetState = rememberBottomSheetState(initialValue = SheetValue.Hidden, enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded))
+        sheetState = rememberBottomSheetState(
+            initialValue = SheetValue.Hidden,
+            enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded)
+        )
     ) {
         Column(
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(24.dp)
+                .verticalScroll(rememberScrollState())
         ) {
             Text(
                 text = stringResource(R.string.module_shortcut_title),
@@ -583,7 +588,7 @@ private fun ModuleShortcutSheet(
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
-                    .padding(vertical = 16.dp)
+                    .padding(vertical = 13.dp)
                     .size(100.dp)
                     .clip(RoundedCornerShape(25.dp))
             ) {
@@ -612,8 +617,16 @@ private fun ModuleShortcutSheet(
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                TextButton(onClick = onPickShortcutIcon) {
-                    Text(stringResource(id = R.string.module_shortcut_icon_pick))
+                TextButton(
+                    onClick = onPickShortcutIcon,
+                    colors = ButtonDefaults.textButtonColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    )
+                ) {
+                    Text(
+                        modifier = Modifier.padding(horizontal = 4.dp),
+                        text = stringResource(id = R.string.module_shortcut_icon_pick)
+                    )
                 }
                 AnimatedVisibility(
                     visible = shortcutState.iconUri != shortcutState.defaultShortcutIconUri,
@@ -636,13 +649,18 @@ private fun ModuleShortcutSheet(
                 value = shortcutState.name,
                 onValueChange = shortcutState::updateName,
                 label = { Text(stringResource(id = R.string.module_shortcut_name_label)) },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 3.dp)
             )
             if (shortcutState.hasExistingShortcut) {
                 TextButton(
                     onClick = onDeleteShortcut,
                     modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                    colors = ButtonDefaults.textButtonColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        contentColor = MaterialTheme.colorScheme.error,
+                    )
                 ) {
                     Text(stringResource(id = R.string.module_shortcut_delete))
                 }
@@ -650,11 +668,14 @@ private fun ModuleShortcutSheet(
             TextButton(
                 onClick = ::copyShortcutUrl,
                 modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.textButtonColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                )
             ) {
                 Text(stringResource(id = R.string.module_shortcut_copy_scheme))
             }
             Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(13.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 OutlinedButton(
@@ -676,12 +697,10 @@ private fun ModuleShortcutSheet(
                     )
                 }
             }
-            Spacer(modifier = Modifier.height(32.dp))
         }
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun ModuleItem(
     module: Module,
@@ -720,7 +739,7 @@ private fun ModuleItem(
                         this
                     }
                 }
-                .padding(22.dp, 18.dp, 22.dp, 12.dp)
+                .padding(16.dp, 14.dp, 16.dp, 10.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -794,7 +813,7 @@ private fun ModuleItem(
                         }
                     ),
                 text = module.description,
-                color = MaterialTheme.colorScheme.outline,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodyMedium,
                 overflow = if (expanded) TextOverflow.Clip else TextOverflow.Ellipsis,
                 maxLines = if (expanded) Int.MAX_VALUE else 4,
