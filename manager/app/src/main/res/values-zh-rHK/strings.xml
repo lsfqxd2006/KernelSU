@@ -270,4 +270,6 @@
     <string name="settings_sulog">超級使用者日誌</string>
     <string name="settings_sulog_summary">將 root 相關事件記錄到 KernelSU 的超級使用者日誌檔案中。</string>
     <string name="profile_flags_desc_no_new_privs">防止在此 Root Profile 的上下文中透過 KernelSU 進一步提升權限</string>
+    <string name="install_force_backup">備份為原廠映像</string>
+    <string name="install_force_backup_summary">請確保你選擇的 boot 映像是原廠映像</string>
 </resources>
