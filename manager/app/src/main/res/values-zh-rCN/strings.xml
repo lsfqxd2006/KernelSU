@@ -290,8 +290,6 @@
     <string name="module_shortcut_scheme_copied">已复制 URL Scheme</string>
     <string name="install_force_backup">备份为原厂镜像</string>
     <string name="install_force_backup_summary">请确保你选择的 boot 镜像是原厂镜像</string>
-    <string name="settings_sulog">SU 日志</string>
-    <string name="settings_sulog_summary">将 Root 相关事件记录到 KernelSU 的 SU 日志文件中</string>
     <string name="sulog_log_files">日志文件</string>
     <string name="sulog_failed_to_load">加载 SU 日志失败</string>
     <string name="sulog_disabled_title">SU 日志未启用</string>
